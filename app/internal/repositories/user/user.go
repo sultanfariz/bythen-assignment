@@ -10,6 +10,7 @@ import (
 	"gorm.io/gorm"
 )
 
+//go:generate mockery --name=UserRepository --output=mocks --outpkg=mocks
 type UserRepository interface {
 	FindByEmail(ctx context.Context, email string) (entities.User, error)
 	CreateUser(ctx context.Context, user entities.User) error
