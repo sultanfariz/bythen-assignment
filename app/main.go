@@ -11,7 +11,7 @@ import (
 	handler "app/internal/handlers"
 	"app/internal/repositories"
 	userRepository "app/internal/repositories/user"
-	userUsecase "app/internal/usecases/user"
+	usecases "app/internal/usecases"
 
 	"github.com/spf13/viper"
 )
@@ -50,7 +50,7 @@ func main() {
 
 	db := repositories.InitDB(configDB)
 	userRepo := userRepository.NewUserRepository(db, timeoutContext)
-	userUsecase := userUsecase.NewUserUsecase(userRepo, configJWT, timeoutContext)
+	userUsecase := usecases.NewUserUsecase(userRepo, configJWT, timeoutContext)
 	userHandler := handler.NewUserHandler(*userUsecase)
 
 	// Create a new HTTP mux
