@@ -134,7 +134,7 @@ func TestUserUsecase_Login(t *testing.T) {
 	}
 	timeout := time.Second * 2
 
-	generateJWT = func(u *UserUsecase, email string) (string, error) {
+	generateJWT = func(u *userUsecase, email string) (string, error) {
 		return "some-jwt-token", nil
 	}
 

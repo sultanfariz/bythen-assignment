@@ -2,7 +2,9 @@ package commons
 
 import (
 	"context"
+	"errors"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -35,19 +37,22 @@ func (jwtConf *ConfigJWT) ExtractClaims(tokenStr string) (jwt.MapClaims, error) 
 }
 
 // create middleware to check token for request without framework gin
-func (jwtConf *ConfigJWT) JWTMiddleware(next http.Handler) http.Handler {
+func (jwtConf *ConfigJWT) JWTMiddleware(next func(w http.ResponseWriter, r *http.Request)) func(w http.ResponseWriter, r *http.Request) {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Header["Authorization"] != nil {
 			tokenStr := r.Header["Authorization"][0]
+			tokenStr = strings.Split(tokenStr, "Bearer ")[1]
 			claims, err := jwtConf.ExtractClaims(tokenStr)
 			if err != nil {
-				http.Error(w, "Invalid token", http.StatusUnauthorized)
+				ErrorResponse(w, http.StatusUnauthorized, err)
 				return
 			}
-			ctx := context.WithValue(r.Context(), "user", claims)
-			next.ServeHTTP(w, r.WithContext(ctx))
+
+			// convert claims to context
+			ctx := context.WithValue(r.Context(), "user", claims["email"])
+			next(w, r.WithContext(ctx))
 		} else {
-			http.Error(w, "Token required", http.StatusUnauthorized)
+			ErrorResponse(w, http.StatusUnauthorized, errors.New("Token required"))
 			return
 		}
 	})

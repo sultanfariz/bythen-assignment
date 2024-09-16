@@ -5,6 +5,7 @@ go 1.21
 require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/go-playground/validator/v10 v10.20.0
+	github.com/gorilla/mux v1.8.1
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.9.0
 	golang.org/x/crypto v0.27.0

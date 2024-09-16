@@ -9,42 +9,42 @@ import (
 )
 
 type UserHandler struct {
-	usecase usecases.UserUsecase
+	usecases usecases.UserUsecase
 }
 
 func NewUserHandler(u usecases.UserUsecase) *UserHandler {
-	return &UserHandler{usecase: u}
+	return &UserHandler{usecases: u}
 }
 
 func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var user entities.UserRegisterRequest
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-		ErrorResponse(w, http.StatusBadRequest, err)
+		commons.ErrorResponse(w, http.StatusBadRequest, err)
 		return
 	}
-	res, err := h.usecase.Register(r.Context(), &user)
+	res, err := h.usecases.Register(r.Context(), &user)
 	if err != nil {
 		status := http.StatusInternalServerError
 		if err == commons.ErrUserAlreadyExists {
 			status = http.StatusConflict
 		}
-		ErrorResponse(w, status, err)
+		commons.ErrorResponse(w, status, err)
 		return
 	}
 
-	SuccessResponse(w, http.StatusCreated, res)
+	commons.SuccessResponse(w, http.StatusCreated, res)
 }
 
 func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var req entities.UserLoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		ErrorResponse(w, http.StatusBadRequest, err)
+		commons.ErrorResponse(w, http.StatusBadRequest, err)
 		return
 	}
-	token, err := h.usecase.Login(r.Context(), &req)
+	token, err := h.usecases.Login(r.Context(), &req)
 	if err != nil {
-		ErrorResponse(w, http.StatusUnauthorized, err)
+		commons.ErrorResponse(w, http.StatusUnauthorized, err)
 		return
 	}
-	SuccessResponse(w, http.StatusOK, token)
+	commons.SuccessResponse(w, http.StatusOK, token)
 }

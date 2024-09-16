@@ -11,17 +11,22 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type UserUsecase struct {
-	Repo           repositories.UserRepository
-	JWTConfig      commons.ConfigJWT
-	ContextTimeout time.Duration
+type UserUsecase interface {
+	Register(ctx context.Context, req *entities.UserRegisterRequest) (entities.User, error)
+	Login(ctx context.Context, req *entities.UserLoginRequest) (string, error)
 }
 
-func NewUserUsecase(repo repositories.UserRepository, jwtConfig commons.ConfigJWT, timeout time.Duration) *UserUsecase {
-	return &UserUsecase{
-		Repo:           repo,
-		JWTConfig:      jwtConfig,
-		ContextTimeout: timeout,
+type userUsecase struct {
+	repo           repositories.UserRepository
+	jwtConfig      commons.ConfigJWT
+	contextTimeout time.Duration
+}
+
+func NewUserUsecase(repo repositories.UserRepository, jwtConfig commons.ConfigJWT, timeout time.Duration) UserUsecase {
+	return &userUsecase{
+		repo:           repo,
+		jwtConfig:      jwtConfig,
+		contextTimeout: timeout,
 	}
 }
 
@@ -31,13 +36,13 @@ var (
 		hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 		return string(hashedPassword)
 	}
-	generateJWT = func(u *UserUsecase, email string) (string, error) {
-		return u.JWTConfig.GenerateJWT(email)
+	generateJWT = func(u *userUsecase, email string) (string, error) {
+		return u.jwtConfig.GenerateJWT(email)
 	}
 )
 
-func (u *UserUsecase) Register(ctx context.Context, req *entities.UserRegisterRequest) (entities.User, error) {
-	ctx, cancel := context.WithTimeout(ctx, u.ContextTimeout)
+func (u *userUsecase) Register(ctx context.Context, req *entities.UserRegisterRequest) (entities.User, error) {
+	ctx, cancel := context.WithTimeout(ctx, u.contextTimeout)
 	defer cancel()
 
 	validator := validator.New()
@@ -46,7 +51,7 @@ func (u *UserUsecase) Register(ctx context.Context, req *entities.UserRegisterRe
 	}
 
 	// Check if user already exists
-	_, err := u.Repo.FindByEmail(ctx, req.Email)
+	_, err := u.repo.FindByEmail(ctx, req.Email)
 	if err == nil {
 		return entities.User{}, commons.ErrUserAlreadyExists
 	}
@@ -60,7 +65,7 @@ func (u *UserUsecase) Register(ctx context.Context, req *entities.UserRegisterRe
 		PasswordHash: string(hashedPassword),
 	}
 
-	err = u.Repo.CreateUser(ctx, user)
+	err = u.repo.CreateUser(ctx, user)
 	if err != nil {
 		return entities.User{}, err
 	}
@@ -68,8 +73,8 @@ func (u *UserUsecase) Register(ctx context.Context, req *entities.UserRegisterRe
 	return user, nil
 }
 
-func (u *UserUsecase) Login(ctx context.Context, req *entities.UserLoginRequest) (string, error) {
-	ctx, cancel := context.WithTimeout(ctx, u.ContextTimeout)
+func (u *userUsecase) Login(ctx context.Context, req *entities.UserLoginRequest) (string, error) {
+	ctx, cancel := context.WithTimeout(ctx, u.contextTimeout)
 	defer cancel()
 
 	validator := validator.New()
@@ -77,7 +82,7 @@ func (u *UserUsecase) Login(ctx context.Context, req *entities.UserLoginRequest)
 		return "", err
 	}
 
-	user, err := u.Repo.FindByEmail(ctx, req.Email)
+	user, err := u.repo.FindByEmail(ctx, req.Email)
 	if err != nil {
 		return "", commons.ErrInvalidCredentials
 	}
@@ -94,28 +99,3 @@ func (u *UserUsecase) Login(ctx context.Context, req *entities.UserLoginRequest)
 
 	return token, nil
 }
-
-// func (u *UserUsecase) Update(ctx context.Context, user entities.User) error {
-// 	ctx, cancel := context.WithTimeout(ctx, u.ContextTimeout)
-// 	defer cancel()
-
-// 	// retrieve email from token
-// 	email, err := u.JWTConfig.ExtractClaims(user.Token)
-
-// 	// Check if user already exists
-// 	_, err := u.Repo.FindByEmail(user.Email)
-// 	if err != nil {
-// 		return errors.New("user not found")
-// 	}
-
-// 	// Hash password
-// 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(user.PasswordHash), bcrypt.DefaultCost)
-// 	user.PasswordHash = string(hashedPassword)
-
-// 	err = u.Repo.UpdateUser(ctx, user)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	return nil
-// }

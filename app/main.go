@@ -10,8 +10,12 @@ import (
 	commons "app/internal/commons"
 	handler "app/internal/handlers"
 	"app/internal/repositories"
+	commentRepository "app/internal/repositories/comment"
+	postRepository "app/internal/repositories/post"
 	userRepository "app/internal/repositories/user"
 	usecases "app/internal/usecases"
+
+	"github.com/gorilla/mux"
 
 	"github.com/spf13/viper"
 )
@@ -51,19 +55,34 @@ func main() {
 	db := repositories.InitDB(configDB)
 	userRepo := userRepository.NewUserRepository(db, timeoutContext)
 	userUsecase := usecases.NewUserUsecase(userRepo, configJWT, timeoutContext)
-	userHandler := handler.NewUserHandler(*userUsecase)
+	userHandler := handler.NewUserHandler(userUsecase)
 
-	// Create a new HTTP mux
-	mux := http.NewServeMux()
+	postRepo := postRepository.NewPostRepository(db, timeoutContext)
+	postUsecase := usecases.NewPostUsecase(postRepo, userRepo, timeoutContext)
+	postHandler := handler.NewPostHandler(postUsecase)
 
-	// Register the handler function
-	mux.HandleFunc("/register", userHandler.Register)
-	mux.HandleFunc("/login", userHandler.Login)
+	commentRepo := commentRepository.NewCommentRepository(db, timeoutContext)
+	commentUsecase := usecases.NewCommentUsecase(commentRepo, postRepo, userRepo, timeoutContext)
+	commentHandler := handler.NewCommentHandler(commentUsecase)
+
+	r := mux.NewRouter()
+
+	r.HandleFunc("/register", userHandler.Register).Methods("POST")
+	r.HandleFunc("/login", userHandler.Login).Methods("POST")
+
+	r.HandleFunc("/posts", configJWT.JWTMiddleware(postHandler.CreatePost)).Methods("POST")
+	r.HandleFunc("/posts", postHandler.GetAllPosts).Methods("GET")
+	r.HandleFunc("/posts/{id}", postHandler.GetPostByID).Methods("GET")
+	r.HandleFunc("/posts/{id}", configJWT.JWTMiddleware(postHandler.UpdatePost)).Methods("PUT")
+	r.HandleFunc("/posts/{id}", configJWT.JWTMiddleware(postHandler.DeletePost)).Methods("DELETE")
+
+	r.HandleFunc("/posts/{id}/comments", configJWT.JWTMiddleware(commentHandler.CreateComment)).Methods("POST")
+	r.HandleFunc("/posts/{id}/comments", commentHandler.GetCommentsByPostID).Methods("GET")
 
 	// Start the HTTP server
 	httpServer := &http.Server{
 		Addr:    ":" + viper.GetString("SERVER_PORT"),
-		Handler: mux,
+		Handler: r,
 	}
 
 	if err := httpServer.Serve(lis); err != nil {
