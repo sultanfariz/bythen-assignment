@@ -21,6 +21,8 @@ import (
 )
 
 func init() {
+	viper.AutomaticEnv()
+
 	viper.SetConfigFile("../.env")
 	if err := viper.ReadInConfig(); err != nil {
 		panic(err)
@@ -31,7 +33,12 @@ func init() {
 }
 
 func main() {
-	lis, err := net.Listen("tcp", ":"+viper.GetString("SERVER_PORT"))
+	port := viper.GetString("SERVER_PORT")
+	if port == "" {
+		port = "8080" // Default port if not set
+	}
+
+	lis, err := net.Listen("tcp", ":"+port)
 	timeoutContext := time.Duration(viper.GetInt("CONTEXT_TIMEOUT")) * time.Second
 
 	if err != nil {

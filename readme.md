@@ -9,6 +9,7 @@ Create a RESTful API using Golang that allows users to perform CRUD operations o
 ### Entities
 
 **User**
+
 - id (integer, primary key)
 - name (string)
 - email (string, unique)
@@ -17,6 +18,7 @@ Create a RESTful API using Golang that allows users to perform CRUD operations o
 - updated_at (timestamp)
 
 **Blog Post**
+
 - id (integer, primary key)
 - title (string)
 - content (text)
@@ -25,6 +27,7 @@ Create a RESTful API using Golang that allows users to perform CRUD operations o
 - updated_at (timestamp)
 
 **Comment**
+
 - id (integer, primary key)
 - post_id (integer, foreign key referencing Blog Post)
 - author_name (string)
@@ -34,10 +37,12 @@ Create a RESTful API using Golang that allows users to perform CRUD operations o
 ### API Endpoints
 
 **User Registration & Authentication**
+
 - `POST /register` - Register a new user.
 - `POST /login` - Login and receive a token for authentication.
 
 **Blog Posts**
+
 - `POST /posts` - Create a new blog post.
 - `GET /posts/{id}` - Get blog post details by ID.
 - `GET /posts` - List all blog posts.
@@ -45,6 +50,7 @@ Create a RESTful API using Golang that allows users to perform CRUD operations o
 - `DELETE /posts/{id}` - Delete a blog post.
 
 **Comments**
+
 - `POST /posts/{id}/comments` - Add a comment to a blog post.
 - `GET /posts/{id}/comments` - List all comments for a blog post.
 
@@ -52,6 +58,12 @@ Create a RESTful API using Golang that allows users to perform CRUD operations o
 
 Provide a MySQL schema design that reflects the above entities and their relationships.
 Ensure proper indexing for performance optimization.
+![ERD](assets/ERD.png)
+The indexes are created on the following columns:
+
+- User: email -> used for retrieving user by email
+- Post: id, created_at -> used for retrieving posts by id and sorting by created_at
+- Comment: id, post_id, created_at -> used for retrieving comments by id, post_id, and sorting by created_at
 
 ## Evaluation Criteria
 
