@@ -5,6 +5,7 @@ import "errors"
 var (
 	ErrInvalidCredentials  = errors.New("invalid credentials")
 	ErrUnauthorized        = errors.New("unauthorized")
+	ErrForbidden           = errors.New("forbidden")
 	ErrInternalServerError = errors.New("internal server error")
 	ErrNotFound            = errors.New("not found")
 	ErrValidationFailed    = errors.New("validation failed")

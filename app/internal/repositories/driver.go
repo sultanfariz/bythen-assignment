@@ -3,6 +3,7 @@ package repositories
 import (
 	"fmt"
 
+	comment "app/internal/repositories/comment"
 	post "app/internal/repositories/post"
 	user "app/internal/repositories/user"
 
@@ -37,6 +38,7 @@ func InitDB(c DBConfig) *gorm.DB {
 	DB.AutoMigrate(
 		&user.User{},
 		&post.Post{},
+		&comment.Comment{},
 	)
 	return DB
 }
